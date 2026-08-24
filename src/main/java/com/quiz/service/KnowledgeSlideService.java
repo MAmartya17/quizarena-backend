@@ -100,8 +100,28 @@ public class KnowledgeSlideService {
             return slide;
 
         } catch (Exception e) {
-            log.error("Failed to generate knowledge slide for question {}: {}", questionId, e.getMessage());
-            throw new RuntimeException("Failed to generate knowledge slide: " + e.getMessage());
+            log.warn("LLM unavailable for slide (question {}), building structured fallback slide: {}", questionId, e.getMessage());
+            String title = "Key Concept: " + (question.getText().length() > 50 ? question.getText().substring(0, 47) + "..." : question.getText());
+            StringBuilder sb = new StringBuilder();
+            sb.append("### Core Takeaway & Solution\n\n");
+            sb.append("**Correct Answer:** Option ").append(question.getCorrectOption()).append(" — ").append(correctAnswerText).append("\n\n");
+            if (question.getExplanation() != null && !question.getExplanation().isBlank()) {
+                sb.append("**Explanation:**\n").append(question.getExplanation()).append("\n\n");
+            } else {
+                sb.append("**Why this is correct:** This answer represents the verified solution.\n\n");
+            }
+            if (sourceContext != null && !sourceContext.isBlank()) {
+                sb.append("**Source Excerpt:**\n> ").append(sourceContext.length() > 300 ? sourceContext.substring(0, 297) + "..." : sourceContext).append("\n\n");
+            }
+            sb.append("💡 *Key Study Tip: Review this concept to ensure full mastery on upcoming attempts.*");
+
+            java.util.Optional<KnowledgeSlide> existingOpt = slideRepository.findByQuestionId(questionId);
+            KnowledgeSlide slide = existingOpt.orElseGet(() -> KnowledgeSlide.builder().question(question).build());
+            slide.setTitle(title);
+            slide.setContent(sb.toString());
+            slide.setSourceGrounded(hasSource);
+            slide.setSourceReference(sourceReference);
+            return slideRepository.save(slide);
         }
     }
 
