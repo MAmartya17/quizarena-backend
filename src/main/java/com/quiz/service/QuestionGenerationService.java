@@ -27,6 +27,7 @@ public class QuestionGenerationService {
 
     private final LlmProvider llmProvider;
     private final KnowledgeBaseService knowledgeBaseService;
+    private final KnowledgeChunkRepository chunkRepository;
     private final GenerationSessionRepository sessionRepository;
     private final GeneratedQuestionRepository generatedQuestionRepository;
     private final KnowledgeSourceRepository sourceRepository;
