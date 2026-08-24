@@ -79,4 +79,27 @@ public class QuizController {
         return quizService.listByCreator(principal.getUser().getId())
                 .stream().map(QuizSummaryDTO::from).toList();
     }
+
+    /** Quiz details with full questions for the owner (used in ManageQuiz). */
+    @GetMapping("/{id}")
+    public ResponseEntity<Quiz> getQuiz(@PathVariable Long id) {
+        return ResponseEntity.ok(quizService.getById(id));
+    }
+
+    /** Delete a quiz and all associated data. */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteQuiz(@PathVariable Long id,
+                                        @AuthenticationPrincipal UserPrincipal principal) {
+        quizService.deleteQuiz(id, principal.getUser());
+        return ResponseEntity.ok(java.util.Map.of("deleted", true));
+    }
+
+    /** Delete an individual question from a quiz. */
+    @DeleteMapping("/{quizId}/questions/{questionId}")
+    public ResponseEntity<?> deleteQuestion(@PathVariable Long quizId,
+                                            @PathVariable Long questionId,
+                                            @AuthenticationPrincipal UserPrincipal principal) {
+        quizService.deleteQuestion(quizId, questionId, principal.getUser());
+        return ResponseEntity.ok(java.util.Map.of("deleted", true));
+    }
 }

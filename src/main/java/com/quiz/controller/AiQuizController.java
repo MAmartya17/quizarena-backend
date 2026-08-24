@@ -236,6 +236,14 @@ public class AiQuizController {
         return ResponseEntity.ok(slides.stream().map(KnowledgeSlideResponse::from).toList());
     }
 
+    /** Get all knowledge slides for a quiz. */
+    @GetMapping("/knowledge-slide/quiz/{quizId}")
+    public ResponseEntity<List<KnowledgeSlideResponse>> getSlidesForQuiz(
+            @PathVariable Long quizId) {
+        List<KnowledgeSlide> slides = knowledgeSlideService.getForQuiz(quizId);
+        return ResponseEntity.ok(slides.stream().map(KnowledgeSlideResponse::from).toList());
+    }
+
     /** Get knowledge slide for a question. */
     @GetMapping("/knowledge-slide/question/{questionId}")
     public ResponseEntity<?> getSlide(@PathVariable Long questionId) {

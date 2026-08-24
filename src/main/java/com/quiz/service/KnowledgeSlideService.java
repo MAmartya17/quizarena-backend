@@ -83,17 +83,17 @@ public class KnowledgeSlideService {
                     )
             );
 
-            JsonNode root = objectMapper.readTree(json);
-            String title = root.has("title") ? root.get("title").asText() : question.getText();
+            String cleanedJson = cleanJson(json);
+            JsonNode root = objectMapper.readTree(cleanedJson);
+            String title = root.has("title") ? root.get("title").asText() : ("Key Concepts: " + question.getText());
             String content = root.has("content") ? root.get("content").asText() : json;
 
-            KnowledgeSlide slide = KnowledgeSlide.builder()
-                    .question(question)
-                    .title(title)
-                    .content(content)
-                    .sourceGrounded(hasSource)
-                    .sourceReference(sourceReference)
-                    .build();
+            java.util.Optional<KnowledgeSlide> existingOpt = slideRepository.findByQuestionId(questionId);
+            KnowledgeSlide slide = existingOpt.orElseGet(() -> KnowledgeSlide.builder().question(question).build());
+            slide.setTitle(title);
+            slide.setContent(content);
+            slide.setSourceGrounded(hasSource);
+            slide.setSourceReference(sourceReference);
 
             slide = slideRepository.save(slide);
             log.info("Generated knowledge slide {} for question {}", slide.getId(), questionId);
@@ -103,6 +103,20 @@ public class KnowledgeSlideService {
             log.error("Failed to generate knowledge slide for question {}: {}", questionId, e.getMessage());
             throw new RuntimeException("Failed to generate knowledge slide: " + e.getMessage());
         }
+    }
+
+    private String cleanJson(String raw) {
+        if (raw == null) return "{}";
+        String trimmed = raw.trim();
+        if (trimmed.startsWith("```json")) {
+            trimmed = trimmed.substring(7);
+        } else if (trimmed.startsWith("```")) {
+            trimmed = trimmed.substring(3);
+        }
+        if (trimmed.endsWith("```")) {
+            trimmed = trimmed.substring(0, trimmed.length() - 3);
+        }
+        return trimmed.trim();
     }
 
     /**

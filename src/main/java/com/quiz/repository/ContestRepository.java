@@ -24,4 +24,9 @@ public interface ContestRepository extends JpaRepository<Contest, Long> {
         WHERE c.quiz.id = :quizId AND c.endAt > :now
     """)
     boolean isQuizLockedByContest(Long quizId, Instant now);
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("delete from Contest c where c.quiz.id = :quizId")
+    void deleteByQuizId(Long quizId);
 }

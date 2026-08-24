@@ -10,9 +10,11 @@ import com.quiz.repository.ContestRepository;
 import com.quiz.repository.QuestionRepository;
 import com.quiz.repository.QuizRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.List;
@@ -25,7 +27,11 @@ public class QuizService {
 
     private final QuizRepository quizRepository;
     private final QuestionRepository questionRepository;
-    private final ContestRepository contestRepository;   // NEW
+    private final ContestRepository contestRepository;
+    private final com.quiz.repository.QuizRatingRepository ratingRepository;
+    private final com.quiz.repository.QuizAttemptRepository attemptRepository;
+    private final com.quiz.repository.KnowledgeSlideRepository slideRepository;
+    private final com.quiz.repository.GenerationSessionRepository generationSessionRepository;
 
     /** IDs of quizzes locked by a live/upcoming contest. Used to flag (not hide) them. */
     @Transactional(readOnly = true)
@@ -49,14 +55,18 @@ public class QuizService {
                 .orElseThrow(() -> new ResourceNotFoundException("Quiz not found: " + id));
     }
 
-    /** Used by the play endpoint: blocks direct play while a contest is unfinished. */
+    /**
+     * Used for play-mode endpoints. Rejects access if the quiz is currently locked
+     * by an unfinished contest (SCHEDULED or ACTIVE).
+     */
     @Transactional(readOnly = true)
     public Quiz getPlayableById(Long id) {
-        Quiz quiz = getById(id);
+        Quiz q = getById(id);
         if (contestRepository.isQuizLockedByContest(id, Instant.now())) {
-            throw new IllegalStateException("This quiz is locked — it's part of a live contest");
+            throw new ResponseStatusException(HttpStatus.LOCKED,
+                    "This quiz is part of a scheduled or active contest and cannot be played directly.");
         }
-        return quiz;
+        return q;
     }
 
     @Transactional
@@ -85,9 +95,49 @@ public class QuizService {
     }
 
     @Transactional
+    public void deleteQuestion(Long quizId, Long questionId, User actor) {
+        Quiz quiz = getById(quizId);
+        ensureOwner(quiz, actor);
+
+        Question q = questionRepository.findById(questionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Question not found: " + questionId));
+        if (!q.getQuiz().getId().equals(quizId)) {
+            throw new IllegalArgumentException("Question does not belong to this quiz");
+        }
+
+        // Delete any knowledge slide linked to this question first
+        slideRepository.findByQuestionId(questionId).ifPresent(slideRepository::delete);
+
+        quiz.getQuestions().remove(q);
+        questionRepository.delete(q);
+    }
+
+    @Transactional
     public void deleteQuiz(Long quizId, User actor) {
         Quiz quiz = getById(quizId);
         ensureOwner(quiz, actor);
+
+        // 1. Delete all knowledge slides for questions in this quiz
+        slideRepository.deleteByQuestionQuizId(quizId);
+
+        // 2. Delete all ratings for this quiz
+        ratingRepository.deleteByQuizId(quizId);
+
+        // 3. Delete all attempts for this quiz
+        attemptRepository.deleteByQuizId(quizId);
+
+        // 4. Delete all contests for this quiz
+        contestRepository.deleteByQuizId(quizId);
+
+        // 5. Unlink generation sessions that created this quiz
+        try {
+            generationSessionRepository.findByQuizId(quizId).forEach(s -> {
+                s.setQuiz(null);
+                generationSessionRepository.save(s);
+            });
+        } catch (Exception ignored) {}
+
+        // 6. Delete quiz (cascades delete to questions)
         quizRepository.delete(quiz);
     }
 
@@ -105,6 +155,7 @@ public class QuizService {
                 .optionC(qr.getOptionC()).optionD(qr.getOptionD())
                 .correctOption(qr.getCorrectOption().toUpperCase())
                 .points(qr.getPoints() == null ? 1 : qr.getPoints())
+                .explanation(qr.getExplanation())
                 .quiz(quiz)
                 .build();
     }

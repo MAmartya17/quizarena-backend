@@ -7,4 +7,5 @@ import java.util.List;
 
 public interface GenerationSessionRepository extends JpaRepository<GenerationSession, Long> {
     List<GenerationSession> findByOwnerIdOrderByCreatedAtDesc(Long ownerId);
+    List<GenerationSession> findByQuizId(Long quizId);
 }

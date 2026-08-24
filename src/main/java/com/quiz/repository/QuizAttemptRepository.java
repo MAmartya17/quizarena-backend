@@ -40,4 +40,9 @@ public interface QuizAttemptRepository extends JpaRepository<QuizAttempt, Long> 
     """)
     List<LeaderboardEntryDTO> findContestLeaderboard(Long contestId, Pageable pageable);
     // ========================================================================
+
+    @org.springframework.data.jpa.repository.Modifying
+    @org.springframework.transaction.annotation.Transactional
+    @Query("delete from QuizAttempt a where a.quiz.id = :quizId")
+    void deleteByQuizId(Long quizId);
 }
