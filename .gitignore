@@ -1,0 +1,33 @@
+# Compiled output
+target/
+*.class
+*.jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse / VSCode
+.classpath
+.project
+.settings/
+.vscode/
+bin/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Secrets — NEVER commit these
+*.env
+*.env.local
+secrets.properties
+application-local.properties
