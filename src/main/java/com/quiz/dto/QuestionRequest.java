@@ -11,4 +11,5 @@ public class QuestionRequest {
     @NotBlank private String optionD;
     @NotBlank @Pattern(regexp = "[ABCD]") private String correctOption;
     @Min(1) private Integer points = 1;
+    private String explanation;
 }
