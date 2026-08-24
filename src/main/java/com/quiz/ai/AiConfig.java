@@ -18,13 +18,13 @@ public class AiConfig {
     @Value("${app.ai.api-key:}")
     private String apiKey;
 
-    @Value("${app.ai.model:gemini-2.0-flash}")
+    @Value("${app.ai.model:gemini-flash-lite-latest}")
     private String model;
 
-    @Value("${app.ai.embedding-model:text-embedding-004}")
+    @Value("${app.ai.embedding-model:gemini-embedding-001}")
     private String embeddingModel;
 
-    @Value("${app.ai.embedding-dimensions:768}")
+    @Value("${app.ai.embedding-dimensions:3072}")
     private int embeddingDimensions;
 
     @Value("${app.ai.max-retries:3}")
