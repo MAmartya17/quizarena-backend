@@ -55,9 +55,9 @@ public final class PromptTemplates {
         2. DIVERSITY IS MANDATORY: Every question text MUST be completely unique. NEVER use formulaic phrasing like "According to the source material..." or "Which statement is true...". Ask direct, specific questions about the concepts (e.g., "What is the primary advantage of dynamic typing in Python?").
         3. PARAPHRASE: Do NOT copy exact sentences from the text into the question or options. You must rephrase concepts in your own words to test true understanding rather than just pattern matching.
         4. PLAUSIBLE DISTRACTORS: Distractors (wrong options) MUST be highly specific to the question being asked and contextually relevant. NEVER use generic, repetitive distractors like "None of the above", "It is obsolete", or "It applies only under reverse unverified conditions". Write real, conceptual misconceptions as distractors.
-        5. Each question must have exactly 4 options (A, B, C, D) with exactly ONE correct option.
-        6. Questions should test understanding, synthesis, and application, not just rote recall.
-        7. Include a clear explanation referencing the source material.
+        5. NEVER use the exact phrases "According to the source material", "Which of the following", or "All of the above".
+        6. Each question must have exactly 4 options (A, B, C, D) with exactly ONE correct option.
+        7. Questions should test understanding, synthesis, and application, not just rote recall.
         8. Output ONLY valid JSON, no other text.
         """;
 
@@ -79,14 +79,14 @@ public final class PromptTemplates {
             %s
             %s
             
-            Return a JSON array of question objects:
+            Return a JSON array of question objects EXACTLY matching this format:
             [
               {
                 "questionText": "Direct, specific question testing a concept (Do NOT use generic phrasing like 'According to the text...')",
-                "optionA": "First plausible option (paraphrased, do not copy exactly)",
-                "optionB": "Second plausible option (paraphrased, do not copy exactly)",
-                "optionC": "Third plausible option (paraphrased, do not copy exactly)",
-                "optionD": "Fourth plausible option (paraphrased, do not copy exactly)",
+                "optionA": "First plausible specific concept (paraphrased, do not copy exactly)",
+                "optionB": "Second plausible specific concept (paraphrased, do not copy exactly)",
+                "optionC": "Third plausible specific concept (paraphrased, do not copy exactly)",
+                "optionD": "Fourth plausible specific concept (paraphrased, do not copy exactly)",
                 "correctOption": "A",
                 "explanation": "Why this answer is correct, referencing the source",
                 "difficulty": "EASY|MEDIUM|HARD",
