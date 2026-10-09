@@ -30,7 +30,7 @@ public class GroqLlmProvider implements LlmProvider {
     public GroqLlmProvider(String apiKey, String model, int maxRetries) {
         this.apiKey = apiKey;
         // Default to a robust Groq model if none provided
-        this.model = (model != null && !model.isBlank() && !model.contains("gemini")) ? model : "llama-3.3-70b-versatile";
+        this.model = (model != null && !model.isBlank() && !model.contains("gemini")) ? model : "openai/gpt-oss-120b";
         this.maxRetries = maxRetries;
         this.restClient = RestClient.builder().build();
         this.objectMapper = new ObjectMapper();
