@@ -196,13 +196,8 @@ public class QuestionGenerationService {
             }
 
             if (allCandidates.isEmpty()) {
-                log.warn("AI generation produced 0 candidates for session {}, using document-grounded fallback generator", session.getId());
-                allCandidates = generateFallbackQuestions(session, source, targetCandidates, sourceFileName);
-            }
-
-            if (allCandidates.isEmpty()) {
                 session.setStatus("FAILED");
-                session.setProgressMessage("Could not generate any questions from the provided material.");
+                session.setProgressMessage("AI Provider Error: The AI model failed to generate any questions. Please check your API keys (Gemini/Groq) in Render Environment Variables.");
                 session.setCompletedAt(Instant.now());
                 sessionRepository.save(session);
                 return;
@@ -532,51 +527,7 @@ public class QuestionGenerationService {
         return trimmed.trim();
     }
 
-    private List<GeneratedQuestion> generateFallbackQuestions(GenerationSession session, KnowledgeSource source, int count, String sourceFileName) {
-        List<GeneratedQuestion> fallbacks = new ArrayList<>();
-        List<KnowledgeChunk> chunks = chunkRepository.findBySourceIdOrderByChunkIndex(source.getId());
-        if (chunks.isEmpty()) return fallbacks;
 
-        int chunkIdx = 0;
-        while (fallbacks.size() < count && chunkIdx < chunks.size()) {
-            KnowledgeChunk chunk = chunks.get(chunkIdx);
-            String content = chunk.getContent();
-            String[] sentences = content.split("(?<=[.!?])\\s+");
-
-            for (String s : sentences) {
-                String cleanS = s.trim();
-                if (cleanS.length() >= 40 && cleanS.length() <= 200 && (cleanS.contains(" is ") || cleanS.contains(" are ") || cleanS.contains(" can ") || cleanS.contains(" used for "))) {
-                    String qText = "According to the source material, which statement is true regarding: " +
-                            (chunk.getSectionHeading() != null ? chunk.getSectionHeading() : "the core topic") + "?";
-                    
-                    GeneratedQuestion gq = GeneratedQuestion.builder()
-                            .session(session)
-                            .questionText(qText)
-                            .optionA(cleanS)
-                            .optionB("It is strictly obsolete and no longer applicable.")
-                            .optionC("It applies only under reverse unverified conditions.")
-                            .optionD("None of the above statements are supported.")
-                            .correctOption("A")
-                            .explanation("Directly referenced from source: \"" + cleanS + "\"")
-                            .difficulty(session.getDifficulty() != null ? session.getDifficulty() : "MEDIUM")
-                            .topic(chunk.getSectionHeading() != null ? chunk.getSectionHeading() : "General")
-                            .qualityScore(0.85)
-                            .selected(false)
-                            .sourceChunkIds(String.valueOf(chunk.getId()))
-                            .sourceContext(content.length() > 1000 ? content.substring(0, 1000) : content)
-                            .sourceReference((sourceFileName != null ? sourceFileName : "Source Document") + (chunk.getPageNumber() != null ? " — Page " + chunk.getPageNumber() : ""))
-                            .passedValidation(true)
-                            .build();
-
-                    fallbacks.add(gq);
-                    if (fallbacks.size() >= count) break;
-                }
-            }
-            chunkIdx++;
-        }
-
-        return fallbacks;
-    }
 
     private String getString(Map<String, Object> map, String key) {
         Object val = map.get(key);
