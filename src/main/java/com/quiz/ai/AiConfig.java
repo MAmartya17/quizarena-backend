@@ -21,7 +21,7 @@ public class AiConfig {
     @Value("${app.ai.groq.api-key:}")
     private String groqApiKey;
 
-    @Value("${app.ai.groq.model:llama3-70b-8192}")
+    @Value("${app.ai.groq.model:openai/gpt-oss-120b}")
     private String groqModel;
 
     @Value("${app.ai.embedding-model:gemini-embedding-001}")
